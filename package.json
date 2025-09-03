@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "start:optimized": "node server-optimized.js",
     "dev": "node server.js",
+    "dev:optimized": "node server-optimized.js",
     "cleanup": "node scripts/cleanup-old-games.js"
   },
   "keywords": ["football", "parser", "api", "mongodb", "sports"],

@@ -22,6 +22,10 @@ if (!MONGO_URI || !API_KEY) {
 
 /** ---------- APP/MONGO ---------- */
 const app = express();
+
+// Middleware
+app.use(express.json());
+
 const client = new MongoClient(MONGO_URI, {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 15000,
@@ -235,6 +239,36 @@ app.get("/fixtures/upcoming", async (_req, res) => {
     .toArray();
 
   res.json(docs);
+});
+
+// Notify bot about fixture updates
+app.post("/fixtures/notify", async (req, res) => {
+  try {
+    const { fixtureId, oldStatus, newStatus, oldScore, newScore } = req.body;
+    
+    if (!fixtureId) {
+      return res.status(400).json({ error: "fixtureId is required" });
+    }
+    
+    console.log(`📢 Notification request for fixture ${fixtureId}: ${oldStatus} → ${newStatus}`);
+    
+    // Here you would send notification to Discord bot
+    // For now, we'll just log it
+    console.log(`   Old: ${oldStatus} (${oldScore ? `${oldScore.home}-${oldScore.away}` : 'N/A'})`);
+    console.log(`   New: ${newStatus} (${newScore ? `${newScore.home}-${newScore.away}` : 'N/A'})`);
+    
+    res.json({
+      success: true,
+      message: "Notification processed",
+      fixtureId,
+      oldStatus,
+      newStatus
+    });
+    
+  } catch (error) {
+    console.error("❌ Error processing notification:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Manual update for specific fixture
