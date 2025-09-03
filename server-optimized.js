@@ -224,16 +224,18 @@ async function updateThreadedFixtures() {
       const fixtureIdsBatch = batch.map(f => f.fixtureId);
       
       // Fetch fresh data from API
-      const response = await fetch(`${API_BASE}/fixtures?ids=${fixtureIdsBatch.join('-')}`, {
-        headers: { 'X-RapidAPI-Key': API_KEY }
+      const response = await axios.get("https://v3.football.api-sports.io/fixtures", {
+        headers: { "x-apisports-key": API_KEY },
+        params: { ids: fixtureIdsBatch.join('-') },
+        timeout: 10000
       });
       
-      if (!response.ok) {
+      if (response.status !== 200) {
         console.log(`  ⚠️ API error for batch: ${response.status}`);
         continue;
       }
       
-      const data = await response.json();
+      const data = response.data;
       if (!data.response || data.response.length === 0) continue;
       
       // Update fixtures with new data
