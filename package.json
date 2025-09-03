@@ -1,0 +1,23 @@
+{
+  "name": "sports-parser-af",
+  "version": "1.0.0",
+  "description": "Automated football fixtures parser from API-Football with MongoDB storage and TTL cleanup",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "cleanup": "node scripts/cleanup-old-games.js"
+  },
+  "keywords": ["football", "parser", "api", "mongodb", "sports"],
+  "author": "Andrii Kysil",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dayjs": "^1.11.10",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "init": "^0.1.2",
+    "mongodb": "^6.3.0"
+  }
+}
