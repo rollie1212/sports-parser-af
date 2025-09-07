@@ -3,6 +3,7 @@ import express from "express";
 import axios from "axios";
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
+import imageService from "./lib/image-service.js";
 dotenv.config();
 
 /** ---------- ENV ---------- */
@@ -341,6 +342,14 @@ async function fetchAndUpsertByDate(dateStr) {
           },
           rawStatus: f?.fixture?.status || null,
           updatedAt: new Date(),
+          // Enhanced with image URLs
+          images: {
+            homeTeamLogo: imageService.getTeamLogo(f?.teams?.home?.id),
+            awayTeamLogo: imageService.getTeamLogo(f?.teams?.away?.id),
+            leagueLogo: imageService.getLeagueLogo(f?.league?.id),
+            countryFlag: imageService.getCountryFlag(f?.league?.country),
+            venueImage: imageService.getStadiumImage(f?.fixture?.venue?.id)
+          }
         };
 
         // TTL helper
@@ -373,7 +382,16 @@ async function fetchAndUpsertByDate(dateStr) {
 
     return totalUpdated;
   } catch (error) {
-    console.error(`❌ Error fetching fixtures for ${dateStr}:`, error.message);
+    if (error.response) {
+      console.error(`❌ API Error for ${dateStr}: ${error.response.status} - ${error.response.statusText}`);
+      if (error.response.status === 503) {
+        console.log(`⚠️ Service temporarily unavailable for ${dateStr}, will retry later`);
+      }
+    } else if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      console.error(`❌ Connection error for ${dateStr}: ${error.message}`);
+    } else {
+      console.error(`❌ Error fetching fixtures for ${dateStr}:`, error.message);
+    }
     return 0;
   }
 }
@@ -498,6 +516,158 @@ app.post("/update/force", async (_req, res) => {
     lastUpdateTime = 0; // Reset to force full update
     await smartUpdateCycle();
     res.json({ success: true, message: "Full update completed" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Image optimization endpoints
+app.get("/images/team/:teamId", (req, res) => {
+  try {
+    const teamId = parseInt(req.params.teamId);
+    const { width, height, quality, format } = req.query;
+    
+    if (!teamId) {
+      return res.status(400).json({ error: "Invalid team ID" });
+    }
+    
+    const options = {};
+    if (width) options.width = parseInt(width);
+    if (height) options.height = parseInt(height);
+    if (quality) options.quality = parseInt(quality);
+    if (format) options.format = format;
+    
+    const logoUrl = imageService.getTeamLogo(teamId, options);
+    
+    res.json({
+      teamId,
+      logoUrl,
+      options: options
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/images/league/:leagueId", (req, res) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    const { width, height, quality, format } = req.query;
+    
+    if (!leagueId) {
+      return res.status(400).json({ error: "Invalid league ID" });
+    }
+    
+    const options = {};
+    if (width) options.width = parseInt(width);
+    if (height) options.height = parseInt(height);
+    if (quality) options.quality = parseInt(quality);
+    if (format) options.format = format;
+    
+    const logoUrl = imageService.getLeagueLogo(leagueId, options);
+    
+    res.json({
+      leagueId,
+      logoUrl,
+      options: options
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/images/player/:playerId", (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId);
+    const { width, height, quality, format } = req.query;
+    
+    if (!playerId) {
+      return res.status(400).json({ error: "Invalid player ID" });
+    }
+    
+    const options = {};
+    if (width) options.width = parseInt(width);
+    if (height) options.height = parseInt(height);
+    if (quality) options.quality = parseInt(quality);
+    if (format) options.format = format;
+    
+    const photoUrl = imageService.getPlayerPhoto(playerId, options);
+    
+    res.json({
+      playerId,
+      photoUrl,
+      options: options
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/images/venue/:venueId", (req, res) => {
+  try {
+    const venueId = parseInt(req.params.venueId);
+    const { width, height, quality, format } = req.query;
+    
+    if (!venueId) {
+      return res.status(400).json({ error: "Invalid venue ID" });
+    }
+    
+    const options = {};
+    if (width) options.width = parseInt(width);
+    if (height) options.height = parseInt(height);
+    if (quality) options.quality = parseInt(quality);
+    if (format) options.format = format;
+    
+    const imageUrl = imageService.getStadiumImage(venueId, options);
+    
+    res.json({
+      venueId,
+      imageUrl,
+      options: options
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/images/country/:countryCode", (req, res) => {
+  try {
+    const countryCode = req.params.countryCode.toUpperCase();
+    const { width, height, quality, format } = req.query;
+    
+    if (!countryCode || countryCode.length !== 2) {
+      return res.status(400).json({ error: "Invalid country code (use 2-letter code)" });
+    }
+    
+    const options = {};
+    if (width) options.width = parseInt(width);
+    if (height) options.height = parseInt(height);
+    if (quality) options.quality = parseInt(quality);
+    if (format) options.format = format;
+    
+    const flagUrl = imageService.getCountryFlag(countryCode, options);
+    
+    res.json({
+      countryCode,
+      flagUrl,
+      options: options
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Image service status and configuration
+app.get("/images/status", async (_req, res) => {
+  try {
+    const stats = imageService.getStats();
+    const connectivity = await imageService.testConnectivity();
+    
+    res.json({
+      ...stats,
+      connectivity,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

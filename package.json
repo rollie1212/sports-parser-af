@@ -9,7 +9,8 @@
     "start:optimized": "node server-optimized.js",
     "dev": "node server.js",
     "dev:optimized": "node server-optimized.js",
-    "cleanup": "node scripts/cleanup-old-games.js"
+    "cleanup": "node scripts/cleanup-old-games.js",
+    "test:bunnycdn": "node scripts/test-bunnycdn.js"
   },
   "keywords": ["football", "parser", "api", "mongodb", "sports"],
   "author": "Andrii Kysil",
