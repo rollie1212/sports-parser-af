@@ -17,7 +17,9 @@
         "FETCH_INTERVAL_MINUTES": "5",
         "DAYS_AHEAD": "3",
         "BATCH_SIZE": "50",
-        "CACHE_TTL_MINUTES": "10"
+        "CACHE_TTL_MINUTES": "10",
+        "ENABLE_BUNNY_CDN": "false",
+        "BUNNY_CDN_URL": "https://test-media-api-sports.b-cdn.net"
       }
     },
     "development": {
@@ -26,7 +28,9 @@
         "FETCH_INTERVAL_MINUTES": "2",
         "DAYS_AHEAD": "2",
         "BATCH_SIZE": "25",
-        "CACHE_TTL_MINUTES": "5"
+        "CACHE_TTL_MINUTES": "5",
+        "ENABLE_BUNNY_CDN": "false",
+        "BUNNY_CDN_URL": "https://test-media-api-sports.b-cdn.net"
       }
     }
   }
