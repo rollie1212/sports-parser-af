@@ -484,25 +484,23 @@ app.post("/fixtures/notify", async (req, res) => {
   }
 });
 
-// Get fixtures for active threads
+// Get fixtures for all threads (including closed ones)
 app.get("/fixtures/threaded", async (_req, res) => {
   try {
-    const activeThreads = await threads.find({ 
-      closed: { $ne: true } 
-    }).toArray();
+    const allThreads = await threads.find({}).toArray();
     
-    if (activeThreads.length === 0) {
+    if (allThreads.length === 0) {
       return res.json({ fixtures: [] });
     }
     
-    const fixtureIds = activeThreads.map(t => t.fixtureId);
+    const fixtureIds = allThreads.map(t => t.fixtureId);
     const fixturesData = await fixtures.find({
       fixtureId: { $in: fixtureIds }
     }).toArray();
     
     res.json({ 
       fixtures: fixturesData,
-      threadCount: activeThreads.length 
+      threadCount: allThreads.length 
     });
   } catch (error) {
     console.error("❌ Error getting threaded fixtures:", error);
