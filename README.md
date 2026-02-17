@@ -44,6 +44,14 @@ DAYS_AHEAD=5
 # BunnyCDN Configuration (Optional)
 ENABLE_BUNNY_CDN=false
 BUNNY_CDN_URL=https://your-pull-zone.b-cdn.net
+
+# Telegram live events tracking (Optional)
+ENABLE_LIVE_EVENTS_TRACKER=false
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
+LIVE_EVENTS_INTERVAL_SECONDS=60
+API_TIMEZONE=Europe/Prague
+LIVE_EVENTS_LEAGUE_IDS=39,78,140,135,61,2,3,848
 ```
 
 4. Запустите парсер:
@@ -81,6 +89,15 @@ GET /images/country/:countryCode?width=40&height=30&quality=85
 GET /images/status
 ```
 Оптимизированные изображения через BunnyCDN.
+
+### Live Events Poll Trigger
+```
+POST /events/live/poll
+```
+Принудительно запускает опрос live событий и отправку новых событий в Telegram.
+Трекинг работает только если `ENABLE_LIVE_EVENTS_TRACKER=true`.
+Отправляются только live события для лиг из `LIVE_EVENTS_LEAGUE_IDS` (строгий allowlist по `league.id`).
+Если `LIVE_EVENTS_LEAGUE_IDS` пустой, трекинг не запускается даже при `ENABLE_LIVE_EVENTS_TRACKER=true`.
 
 ## 🗄️ База данных
 

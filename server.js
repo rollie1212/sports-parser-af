@@ -4,6 +4,11 @@ import axios from "axios";
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 import imageService from "./lib/image-service.js";
+import { createLiveEventsTracker } from "./lib/live-events-tracker.js";
+import {
+  createLeagueIdMatcher,
+  parseLeagueIdAllowlist,
+} from "./lib/competition-scope.js";
 dotenv.config();
 
 /** ---------- ENV ---------- */
@@ -15,6 +20,9 @@ const API_URL = "https://v3.football.api-sports.io/fixtures";
 // простые настройки
 const FETCH_INTERVAL_MINUTES = parseInt(process.env.FETCH_INTERVAL_MINUTES || "1", 10); // 1 минута
 const DAYS_AHEAD = parseInt(process.env.DAYS_AHEAD || "2", 10);
+const LIVE_EVENTS_LEAGUE_IDS = parseLeagueIdAllowlist(
+  process.env.LIVE_EVENTS_LEAGUE_IDS
+);
 
 if (!MONGO_URI || !API_KEY) {
   console.error("❌ Missing MONGO_URI or API_KEY in .env");
@@ -33,6 +41,11 @@ const client = new MongoClient(MONGO_URI, {
 });
 
 let db, fixtures;
+let liveEventsTracker;
+
+function envFlag(value) {
+  return String(value || "").toLowerCase() === "true";
+}
 
 async function connectMongo() {
   await client.connect();
@@ -437,6 +450,15 @@ app.get("/images/status", async (_req, res) => {
   }
 });
 
+app.post("/events/live/poll", async (_req, res) => {
+  if (!liveEventsTracker) {
+    return res.status(503).json({ error: "Live events tracker is not initialized" });
+  }
+
+  const result = await liveEventsTracker.pollOnce();
+  res.json(result);
+});
+
 /** ---------- UPDATE LOOP (ПРОСТАЯ ЛОГИКА) ---------- */
 async function updateCycle() {
   try {
@@ -466,6 +488,23 @@ async function updateCycle() {
 app.listen(PORT, async () => {
   try {
     await connectMongo();
+    const liveEventsEnabled = envFlag(process.env.ENABLE_LIVE_EVENTS_TRACKER);
+    if (liveEventsEnabled && LIVE_EVENTS_LEAGUE_IDS.size === 0) {
+      console.log(
+        "⚠️ Live events tracker requested but LIVE_EVENTS_LEAGUE_IDS is empty. Tracker will stay disabled."
+      );
+    }
+    liveEventsTracker = createLiveEventsTracker({
+      db,
+      apiKey: API_KEY,
+      telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
+      telegramChatId: process.env.TELEGRAM_CHAT_ID,
+      enabled: liveEventsEnabled && LIVE_EVENTS_LEAGUE_IDS.size > 0,
+      shouldTrackFixture: createLeagueIdMatcher(LIVE_EVENTS_LEAGUE_IDS),
+      intervalSeconds: process.env.LIVE_EVENTS_INTERVAL_SECONDS || "60",
+      timezone: process.env.API_TIMEZONE || "Europe/Prague",
+    });
+    await liveEventsTracker.start();
     console.log(`🚀 Parser running on http://localhost:${PORT}`);
     console.log(`⏰ Update interval: ${FETCH_INTERVAL_MINUTES} minutes`);
     console.log(`📅 Days ahead: ${DAYS_AHEAD}`);
@@ -482,6 +521,9 @@ app.listen(PORT, async () => {
 process.on("SIGINT", async () => {
   console.log("👋 Closing Mongo connection...");
   try {
+    if (liveEventsTracker) {
+      await liveEventsTracker.stop();
+    }
     await client.close();
   } finally {
     process.exit(0);
