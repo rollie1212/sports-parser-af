@@ -515,6 +515,12 @@ app.listen(PORT, async () => {
       ytLookbackHours: process.env.YT_LOOKBACK_HOURS || "6",
       ytMaxResults: process.env.YT_MAX_RESULTS || "10",
       ytCacheMinutes: process.env.YT_CACHE_MINUTES || "10",
+      ytRegionCode: process.env.YT_REGION_CODE || "CZ",
+      ytRelevanceLanguage: process.env.YT_RELEVANCE_LANGUAGE || "en",
+      ytSpamKeywords: process.env.YT_SPAM_KEYWORDS || "",
+      rdtLookbackHours: process.env.RDT_LOOKBACK_HOURS || "12",
+      rdtMaxResults: process.env.RDT_MAX_RESULTS || "10",
+      rdtCacheMinutes: process.env.RDT_CACHE_MINUTES || "10",
     });
     await liveEventsTracker.start();
     console.log(`🚀 Parser running on http://localhost:${PORT}`);
