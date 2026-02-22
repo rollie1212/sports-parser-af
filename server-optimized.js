@@ -693,6 +693,14 @@ app.post("/events/live/poll", async (_req, res) => {
   res.json(result);
 });
 
+app.post("/telegram/webhook", async (req, res) => {
+  if (!liveEventsTracker) {
+    return res.status(503).json({ error: "Live events tracker is not initialized" });
+  }
+  const result = await liveEventsTracker.handleTelegramUpdate(req.body);
+  res.json(result);
+});
+
 /** ---------- START ---------- */
 app.listen(PORT, async () => {
   try {
@@ -712,6 +720,10 @@ app.listen(PORT, async () => {
       shouldTrackFixture: createLeagueIdMatcher(LIVE_EVENTS_LEAGUE_IDS),
       intervalSeconds: process.env.LIVE_EVENTS_INTERVAL_SECONDS || "60",
       timezone: process.env.API_TIMEZONE || "Europe/Prague",
+      youtubeApiKey: process.env.YOUTUBE_API_KEY,
+      ytLookbackHours: process.env.YT_LOOKBACK_HOURS || "6",
+      ytMaxResults: process.env.YT_MAX_RESULTS || "10",
+      ytCacheMinutes: process.env.YT_CACHE_MINUTES || "10",
     });
     await liveEventsTracker.start();
     console.log(`🚀 Optimized Parser running on http://localhost:${PORT}`);

@@ -52,6 +52,10 @@ TELEGRAM_CHAT_ID=your_telegram_chat_id
 LIVE_EVENTS_INTERVAL_SECONDS=60
 API_TIMEZONE=Europe/Prague
 LIVE_EVENTS_LEAGUE_IDS=39,78,140,135,61,2,3,848
+YOUTUBE_API_KEY=your_youtube_data_api_key
+YT_LOOKBACK_HOURS=6
+YT_MAX_RESULTS=10
+YT_CACHE_MINUTES=10
 ```
 
 4. Запустите парсер:
@@ -98,6 +102,12 @@ POST /events/live/poll
 Трекинг работает только если `ENABLE_LIVE_EVENTS_TRACKER=true`.
 Отправляются только live события для лиг из `LIVE_EVENTS_LEAGUE_IDS` (строгий allowlist по `league.id`).
 Если `LIVE_EVENTS_LEAGUE_IDS` пустой, трекинг не запускается даже при `ENABLE_LIVE_EVENTS_TRACKER=true`.
+
+### Telegram Callback Webhook
+```
+POST /telegram/webhook
+```
+Принимает `callback_query` от inline-кнопок Telegram (YouTube search / Use / More / Back / Skip).
 
 ## 🗄️ База данных
 
